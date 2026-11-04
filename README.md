@@ -85,14 +85,3 @@ python kit/tools/build.py --language ko
 패치 적용과 한국어·기존 언어·Service 검사를 실행합니다.
 원본 앱은 검사 중에만 내려받으며 이 저장소에 올리지 않습니다.
 
-이 패치는 원본의 새 버전에 자동으로 맞춰지지 않습니다. 원본이 업데이트되면
-변경 내용을 비교하고 새 문구를 번역한 뒤 다시 검증해야 합니다.
-차량별 고장 설명 전체 데이터베이스와 Doom 게임 본문은 원문이 남을 수 있습니다.
-자동 검사는 차량과 통신하지 않으며 실차 설치 검증을 대신하지 않습니다.
-
-## 출처와 라이선스
-
-원본 프로젝트: cauliflowermossgrape/idrive7-apps, MIT. 원본 저작권 고지는 `LICENSE`에 유지합니다.
-한국어 수정본 기준: `354c9f747db89e9d6018701db78ced0f31e81b56`.
-한글 글꼴: Noto Sans CJK KR, OFL-1.1. 라이선스는
-`payload/kit/localization/fonts/OFL-NotoSansKR.txt`에 있습니다.
