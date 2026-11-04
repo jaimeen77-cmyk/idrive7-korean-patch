@@ -1,0 +1,275 @@
+diff --git a/apps/aa_cluster_companion/main.js b/apps/aa_cluster_companion/main.js
+index 066095b42201c0bd4e1776083feb99a779efc5df..885cd24acea238431f77af94f5a582581febb09e 100644
+--- a/apps/aa_cluster_companion/main.js
++++ b/apps/aa_cluster_companion/main.js
+@@ -22,6 +22,7 @@ const path = require('path');
+ const mgu = require('./kit/mgu');
+ const { withAlpha } = require('./kit/canvas');
+ const G = require('./kit/gauges');
++const { t: translate } = require('./kit/i18n');
+ const { Ctl } = require('./ctl');
+ 
+ const W = 1600, H = 520;
+@@ -34,7 +35,9 @@ const SLOT_DPI = 235;                                            // the map slot
+ // what a density gives against the slot's own size
+ function note(d) {
+     const p = Math.round((SLOT_DPI / d - 1) * 100);
+-    return Math.abs(p) <= 3 ? "the slot's own size" : p > 0 ? 'about ' + p + '% more map' : 'about ' + -p + '% larger text';
++    return Math.abs(p) <= 3 ? translate("the slot's own size")
++        : translate(p > 0 ? 'about {percent}% more map' : 'about {percent}% larger text')
++            .replace('{percent}', String(Math.abs(p)));
+ }
+ const CARDS = [['shown', 'Shown'], ['hidden', 'Hidden']];
+ const cardTxt = (c) => (c === 'hidden' ? 'card hidden' : 'card shown');
+diff --git a/apps/service/main.js b/apps/service/main.js
+index 03f1cd174518f7df46ad9a80b2688d8880f90e6b..4a041fd97b5f2da2cfcf2ad3b405b9594d8cf9b4 100644
+--- a/apps/service/main.js
++++ b/apps/service/main.js
+@@ -50,11 +50,17 @@ const STATUS = ['', 'Due now', 'Due soon', 'OK', 'Due soon'];
+ function parseDue(s, now) {
+     s = String(s || '').trim();
+     let m, d = null, mo, y;
+-    if ((m = /^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/.exec(s))) { d = +m[1]; mo = +m[2]; y = +m[3]; } else if ((m = /^(\d{1,2})[./-](\d{4})$/.exec(s))) { mo = +m[1]; y = +m[2]; } else if ((m = /^(\d{4})[./-](\d{1,2})$/.exec(s))) { y = +m[1]; mo = +m[2]; } else return null;
++    if ((m = /^(\d{4})\s*년\s*(\d{1,2})\s*월(?:\s*(\d{1,2})\s*일)?$/.exec(s))) { y = +m[1]; mo = +m[2]; d = m[3] ? +m[3] : null; }
++    else if ((m = /^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/.exec(s))) { d = +m[1]; mo = +m[2]; y = +m[3]; } else if ((m = /^(\d{1,2})[./-](\d{4})$/.exec(s))) { mo = +m[1]; y = +m[2]; } else if ((m = /^(\d{4})[./-](\d{1,2})$/.exec(s))) { y = +m[1]; mo = +m[2]; } else return null;
+     if (mo < 1 || mo > 12) return null;
+     now = now || new Date();
+     const months = (y - now.getFullYear()) * 12 + (mo - 1 - now.getMonth());
+     const n = Math.abs(months), unit = ' ' + plural(n, 'month', 'months');
++    if (getLanguage() === 'ko') return {
++        text: y + '년 ' + mo + '월' + (d ? ' ' + d + '일' : ''),
++        left: months > 0 ? n + '개월 후' : months === 0 ? '이번 달' : n + '개월 초과',
++        months,
++    };
+     const month = d && getLanguage() === 'ru' ? MONTHS_RU_GENITIVE[mo - 1] : translate(MONTHS[mo - 1]);
+     return {
+         text: (d ? d + ' ' : '') + month + ' ' + y,
+diff --git a/kit/runtime/fonts.js b/kit/runtime/fonts.js
+index 41ce5dd532518591055d7194630dd7277b90c884..6c55182825f47c92bb97b98d0decfd29effa0bea 100644
+--- a/kit/runtime/fonts.js
++++ b/kit/runtime/fonts.js
+@@ -27,7 +27,8 @@ function family(name) {
+ /** Smallest baked size >= requested (downscaling looks better), else largest. */
+ function get(name, size, text) {
+     // Shared supplemental atlases avoid duplicating glyphs in every numeric size.
+-    if (text && /[\u3000-\u9fff\uff00-\uffef]/.test(text)) name = 'cjk';
++    if (text && /[\u1100-\u11ff\u3130-\u318f\ua960-\ua97f\uac00-\ud7ff]/.test(text)) name = 'korean';
++    else if (text && /[\u3000-\u9fff\uff00-\uffef]/.test(text)) name = 'cjk';
+     else if (text && /[\u0400-\u04ff]/.test(text)) name = 'cyrillic';
+     const fam = family(name) || family('label');
+     if (!fam) return null;
+diff --git a/kit/runtime/i18n.js b/kit/runtime/i18n.js
+index 3285711caa77da2588bf8b6f9aecd9cefb780468..40d518587d03f534ac72a1e1bccec219bc04c4ff 100644
+--- a/kit/runtime/i18n.js
++++ b/kit/runtime/i18n.js
+@@ -20,6 +20,7 @@ const PLURAL_RULES = {
+         return mod10 >= 2 && mod10 <= 4 ? 1 : 2;
+     },
+     'zh-CN': () => 0,
++    ko: () => 0,
+ };
+ function plural(n, one, other, lang) {
+     const key = one + '|' + other, lng = lang || language;
+@@ -48,7 +49,9 @@ function t(value) {
+         out = s.slice(0, s.indexOf(key)) + folded[key.toLowerCase()] + s.slice(s.indexOf(key) + key.length);
+     } else {
+         // Short words need context: "min 70" is a minimum, "12 min" is minutes.
+-        out = language === 'zh-CN' ? s.replace(/\bmin(?=\s+-?\d)/g, '最小').replace(/\bmax(?=\s+-?\d)/g, '最大')
++        // Keep numeric battery capacity values/units while removing the English "of".
++        out = language === 'ko' ? s.replace(/(\d+(?:\.\d+)?)\s+of\s+(\d+(?:\.\d+)?)\s+Ah\b/gi, '$1 / $2 Ah') :
++            language === 'zh-CN' ? s.replace(/\bmin(?=\s+-?\d)/g, '最小').replace(/\bmax(?=\s+-?\d)/g, '最大')
+             .replace(/\bAVG(?=\s+[+-]?\d)/g, '平均').replace(/\bACC\b/g, '加速') :
+             language === 'ru' ? s.replace(/\bmin(?=\s+-?\d)/g, 'мин.').replace(/\bmax(?=\s+-?\d)/g, 'макс.')
+                 .replace(/\bAVG(?=\s+[+-]?\d)/g, 'СРЕД.').replace(/\bACC\b/g, 'РАЗГОН') : s;
+diff --git a/kit/tools/build.py b/kit/tools/build.py
+index 6717c69182ebccfd8872d3c516ecd0ccb389c630..0c679653ea13f08765992a7594852b9b4d22c346 100644
+--- a/kit/tools/build.py
++++ b/kit/tools/build.py
+@@ -17,7 +17,7 @@ import gzip, json, os, re, shutil, sys, tarfile, tempfile, uuid
+ from xml.sax.saxutils import escape
+ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+ import pack_data  # noqa: E402
+-from localize import unicode_resources, localize_spec, load_locale, languages, credit, credit_name
++from localize import unicode_resources, localize_spec, load_locale, languages, credit, credit_name, normalize_language
+ 
+ HERE = os.path.dirname(os.path.abspath(__file__))
+ ROOT = os.path.abspath(os.path.join(HERE, '..', '..'))
+@@ -396,12 +396,19 @@ def build_start_widget(spec, app_id, icon_src, out, pkg_out=None):
+     return {'component': comp, 'layout': ui['containers']['500']['components'][str(WIDGET_COMPONENT_ID)]['cells']['Widget']['value']}
+ 
+ 
+-def build(app_id, language='en'):
+-    spec = json.load(open(os.path.join(APPS, app_id, 'app.json'), encoding='utf-8'))
++def build(app_id, language='en', preview_only=False):
++    language = normalize_language(language)
++    if not preview_only and not all(os.path.isfile(os.path.join(SDK, name)) for name in ('index.js', 'package.json')):
++        raise SystemExit('BMW oap-sdk is missing. Extract it from your own head unit with kit/tools/extract_sdk.js, '
++                         'or use --preview-only for an offline preview (no installable package).')
++    adir = os.path.join(APPS, app_id)
++    spec = json.load(open(os.path.join(adir, 'app.json'), encoding='utf-8'))
+     spec = localize_spec(spec, language)
+     spec.setdefault('id', app_id)
+     ver = spec['version']
+     stage = os.path.join(DIST, app_id)
++    # The source folder may use display casing; keep the installed identity stable.
++    app_id = spec['id']
+     shutil.rmtree(stage, ignore_errors=True)
+     src = os.path.join(stage, 'source')
+     os.makedirs(os.path.join(src, 'javascript', 'kit'))
+@@ -436,7 +443,6 @@ def build(app_id, language='en'):
+     json.dump({'rhmiLoadingEnabled': True, 'entryPointLoadingEnabled': True, 'settings': {app_id: spec.get('config', {})}},
+               open(os.path.join(src, 'config', 'base.json'), 'w', encoding='utf-8', newline='\n'), indent=2)
+     # app code
+-    adir = os.path.join(APPS, app_id)
+     fetch_assets(adir, spec.get('assets', []))
+     for f in os.listdir(adir):
+         if f.endswith('.js'):
+@@ -477,6 +483,13 @@ def build(app_id, language='en'):
+     if language == 'ru':
+         shutil.copy(os.path.join(KIT, 'localization', 'fonts', 'cyrillic-ru.json'),
+                     os.path.join(src, 'javascript', 'kit', 'fonts', 'cyrillic.json'))
++    if language == 'ko':
++        # Korean and Chinese are separate fixed-language packages. Loading both large
++        # atlases could fragment the renderer's two 1024x4096 glyph shelves.
++        os.remove(os.path.join(src, 'javascript', 'kit', 'fonts', 'cjk.json'))
++        for name in ('korean.json', 'OFL-NotoSansKR.txt'):
++            shutil.copy(os.path.join(KIT, 'localization', 'fonts', name),
++                        os.path.join(src, 'javascript', 'kit', 'fonts', name))
+     if language == 'zh-CN':
+         # Diagnostic glyphs are Chinese-only; keep the English runtime atlas intact.
+         if app_id == 'dtc_scanner':
+@@ -497,6 +510,9 @@ def build(app_id, language='en'):
+     if credit(language):
+         locale['credit'] = credit(language)['corner']
+     json.dump(locale, open(os.path.join(src, 'javascript', 'kit', 'locale.json'), 'w', encoding='utf-8', newline='\n'), ensure_ascii=False)
++    if preview_only:
++        print('%s %s: offline preview in %s (NO SDK, NOT INSTALLABLE)' % (app_id, ver, stage))
++        return
+     shutil.copy(os.path.join(SDK, 'index.js'), os.path.join(src, 'node_modules', 'oap-sdk', 'index.js'))
+     shutil.copy(os.path.join(SDK, 'package.json'), os.path.join(src, 'node_modules', 'oap-sdk', 'package.json'))
+ 
+@@ -587,12 +603,14 @@ def gz_header_free(path):
+ def main():
+     import argparse
+     parser = argparse.ArgumentParser(description=__doc__)
+-    parser.add_argument('--language', choices=languages(), default='en')
++    parser.add_argument('--language', type=normalize_language, choices=languages(), default='en',
++                        help='UI language; Korean also accepts ko-KR, ko-kr and ko_KR')
++    parser.add_argument('--preview-only', action='store_true', help='stage an offline preview without BMW SDK or installable archives')
+     parser.add_argument('apps', nargs='*')
+     args = parser.parse_args()
+     ids = args.apps or sorted(d for d in os.listdir(APPS) if os.path.exists(os.path.join(APPS, d, 'app.json')))
+     for i in ids:
+-        build(i, args.language)
++        build(i, args.language, preview_only=args.preview_only)
+ 
+ 
+ if __name__ == '__main__':
+diff --git a/kit/tools/locale-revisions.json b/kit/tools/locale-revisions.json
+index 97fa127dcb9b13257a0a7b7bd23581d3b6e786c3..3c41ddb9f7bc542a79cf30133d5079600b2385c0 100644
+--- a/kit/tools/locale-revisions.json
++++ b/kit/tools/locale-revisions.json
+@@ -1 +1 @@
+-{"zh-CN": 4, "ru": 1}
++{"zh-CN": 4, "ru": 1, "ko": 1}
+diff --git a/kit/tools/localize.py b/kit/tools/localize.py
+index 6b1aa213999a72dbb5a1f0d14410a65d73f00679..f231ff7d4b2f9fd6c765a953f8bdce28f697f975 100644
+--- a/kit/tools/localize.py
++++ b/kit/tools/localize.py
+@@ -8,6 +8,11 @@ ROOT = Path(__file__).resolve().parent.parent.parent
+ LOCALES = ROOT / 'kit/runtime/locales'
+ 
+ 
++def normalize_language(language):
++    """Accept regional Korean CLI tags while keeping one catalog/package identity."""
++    return 'ko' if language.lower().replace('_', '-') in ('ko', 'ko-kr') else language
++
++
+ def credit(language):
+     """A translation's credit (corner, settings rows, entry comment), shipped only in that language's
+     builds: kit/localization/credit.<language>.json. None when the language has no credit file."""
+@@ -45,6 +50,7 @@ def package_version(version, language):
+ 
+ 
+ def localize_spec(spec, language):
++    language = normalize_language(language)
+     words = load_locale(language)
+     s = copy.deepcopy(spec)
+     s['version'] = package_version(s['version'], language)
+diff --git a/kit/tools/make_kit.py b/kit/tools/make_kit.py
+index 2df1908e8df1d87f117b69c91315fd40a585ef76..0e817a1b43bdfc21c82b0269d149489c54937fec 100644
+--- a/kit/tools/make_kit.py
++++ b/kit/tools/make_kit.py
+@@ -156,9 +156,10 @@ def md5(p):
+ 
+ def main():
+     import argparse
+-    from localize import languages, package_version
++    from localize import languages, package_version, normalize_language
+     parser = argparse.ArgumentParser(description=__doc__)
+-    parser.add_argument('--language', choices=languages(), default='en')
++    parser.add_argument('--language', type=normalize_language, choices=languages(), default='en',
++                        help='UI language; Korean also accepts ko-KR, ko-kr and ko_KR')
+     parser.add_argument('apps', nargs='*')
+     args = parser.parse_args()
+     # English (the default) keeps the usual dist/mgu-custom-apps(.tar.gz); other languages get a suffix
+@@ -174,9 +175,11 @@ def main():
+     for app in apps:
+         r = subprocess.run([sys.executable, os.path.join(ROOT, 'kit', 'tools', 'build.py'), '--language', args.language, app], cwd=ROOT)
+         if r.returncode: sys.exit('build of %s failed' % app)
+-        ver = json.load(open(os.path.join(ROOT, 'apps', app, 'app.json'), encoding='utf-8'))['version']
++        spec = json.load(open(os.path.join(ROOT, 'apps', app, 'app.json'), encoding='utf-8'))
++        app_id = spec.get('id', app)
++        ver = spec['version']
+         ver = package_version(ver, args.language)
+-        shutil.copyfile(os.path.join(DIST, '%s@%s.mgu' % (app, ver)), os.path.join(OUT, 'apps', '%s@%s.mgu' % (app, ver)))
++        shutil.copyfile(os.path.join(DIST, '%s@%s.mgu' % (app_id, ver)), os.path.join(OUT, 'apps', '%s@%s.mgu' % (app_id, ver)))
+     for src, dst in CAR_FILES:
+         data = open(os.path.join(DEPLOY, src), 'rb').read().replace(b'\r\n', b'\n')
+         open(os.path.join(OUT, dst), 'wb').write(data)
+diff --git a/kit/tools/preview.js b/kit/tools/preview.js
+index b570d60ab253ec0e257eedef6dd82c6c33ff80d2..7aed521baa4db2c07a2df854b8ad77a0f615789d 100644
+--- a/kit/tools/preview.js
++++ b/kit/tools/preview.js
+@@ -19,6 +19,14 @@ const path = require('path');
+ const { headUnit } = require('./hu-stub');
+ 
+ const stage = path.resolve(process.argv[2] || 'dist/car_vitals');
++const localePath = path.join(stage, 'source', 'javascript', 'kit', 'locale.json');
++const previewLanguage = JSON.parse(fs.readFileSync(localePath, 'utf8')).language || 'en';
++console.log('[preview] UI language: ' + previewLanguage + ' | stage: ' + stage);
++if (previewLanguage === 'en') {
++    const python = process.platform === 'win32' ? 'python' : 'python3';
++    console.log('[preview] Korean preview: rebuild first with ' + python +
++        ' kit/tools/build.py --language ko --preview-only ' + path.basename(stage));
++}
+ const args = process.argv.slice(3);
+ // outDir is optional: a first argument that is an option, a step or a component name (BTN_PAGE, SET_THEME) is not it
+ const out = path.resolve(args[0] && !args[0].startsWith('--') && !/^(wait=|frames=|render$|[A-Z][A-Z0-9]*_)/.test(args[0]) ? args.shift() : 'preview');
+diff --git a/kit/tools/sync_locales.py b/kit/tools/sync_locales.py
+index 6756223222c3a33f55e99b0f4deb197b0bc57822..0cea55f83af32f3cdb3d98c1afa66068394f2f3c 100644
+--- a/kit/tools/sync_locales.py
++++ b/kit/tools/sync_locales.py
+@@ -1,13 +1,20 @@
+ #!/usr/bin/env python3
+ """Sync editable runtime/locales/*.tsv catalogs to their runtime JSON files."""
+ import json
++import sys
+ from pathlib import Path
+ 
+ DIRECTORY = Path(__file__).resolve().parent.parent / 'runtime/locales'
+ # Forms per plural row ("one|other<TAB>forms"); must match PLURAL_RULES in runtime/i18n.js.
+-PLURAL_FORMS = {'ru': 3, 'zh-CN': 1}
++PLURAL_FORMS = {'ru': 3, 'zh-CN': 1, 'ko': 1}
+ 
+-for source in sorted(DIRECTORY.glob('*.tsv')):
++sources = sorted(DIRECTORY.glob('*.tsv'))
++if sys.argv[1:]:
++    requested = set(sys.argv[1:])
++    if requested - {p.stem for p in sources}:
++        raise SystemExit('Unknown locale: ' + ', '.join(sorted(requested - {p.stem for p in sources})))
++    sources = [p for p in sources if p.stem in requested]
++for source in sources:
+     words = {}
+     for n, line in enumerate(source.read_text(encoding='utf-8').splitlines(), 1):
+         if not line or line.startswith('#'):

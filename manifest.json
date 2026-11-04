@@ -1,0 +1,122 @@
+{
+  "format": 1,
+  "upstream": "https://github.com/cauliflowermossgrape/idrive7-apps",
+  "base_commit": "68368fdb7d4c86a0164e9131f386baa08264f733",
+  "localization_source_commit": "354c9f747db89e9d6018701db78ced0f31e81b56",
+  "language": "ko",
+  "translation_count": 1774,
+  "patch": {
+    "path": "patches/korean-support.patch",
+    "sha256": "20d9da98082518aa7452220514215712a6d07a347758275835a9f507d57e5288"
+  },
+  "files": [
+    {
+      "path": "apps/aa_cluster_companion/main.js",
+      "kind": "patch",
+      "before_sha256": "8429d8d889bdb3afe4462ded86f0c4fd294ef1163d480ec90e85ee6cbe1a2e96",
+      "after_sha256": "a7e93334979e20833894f91d3b609f31817344ada520bfa4bbad17eba06a29da"
+    },
+    {
+      "path": "apps/service/main.js",
+      "kind": "patch",
+      "before_sha256": "6bab1685cdd820c23f705db6299110dc61d92e3f25387fb083bd0470bc38b3be",
+      "after_sha256": "e856a7ab74975c8cd7707f7afe3a62006466bca83ab1911b1d52e684a59f0e00"
+    },
+    {
+      "path": "kit/runtime/fonts.js",
+      "kind": "patch",
+      "before_sha256": "ba9d24d5ddc9146daaa825ba16940f2323464e236bb2b413a78d422d5feda47e",
+      "after_sha256": "32b44c27f72741fba695d9814b8026644b8e2eb00afe5da5989e7de67aeedc82"
+    },
+    {
+      "path": "kit/runtime/i18n.js",
+      "kind": "patch",
+      "before_sha256": "daf40d71e774d722af5c1cb1007b5bc6cf496aeeadf35a110bc3b0fca1091fdb",
+      "after_sha256": "0600bbd7946fc5cda8155702c63d0a2c9c4422541daca4d353b52fe95a0b7768"
+    },
+    {
+      "path": "kit/tools/build.py",
+      "kind": "patch",
+      "before_sha256": "f7c52114b15a7105d284c0b287dc531c67677f253f9c07ec936f4c631273a173",
+      "after_sha256": "6bf0ca7918a805e011f070802085b07a7e1e3f08d394865810dd2dfe42e1e3e6"
+    },
+    {
+      "path": "kit/tools/locale-revisions.json",
+      "kind": "patch",
+      "before_sha256": "065f674ed6a8422eaba97e1c186c5563344ef33d50426ec9e4e2d4ba1b5249e3",
+      "after_sha256": "8c6ff86fd251dcd03eb2f2c6ccf86cf26dc7cc8e4697993521b63f5363ee27a5"
+    },
+    {
+      "path": "kit/tools/localize.py",
+      "kind": "patch",
+      "before_sha256": "58da3722bf589b3d3d26cb28413253fd6ef321ff9da9a50f3b2592289c5fdf12",
+      "after_sha256": "3da5941a9b05f0f0318bdd48c7595dcac5b8145c24c3afc73a0a828d30910d34"
+    },
+    {
+      "path": "kit/tools/make_kit.py",
+      "kind": "patch",
+      "before_sha256": "1b3fbf370e15a2a22738153f83ed519f18bc3be74cf37054346f91697f40380b",
+      "after_sha256": "321f8d720003e0722e4c050fcb54fa6c912fa34cd7c28d0146714a4eb9ecd8b4"
+    },
+    {
+      "path": "kit/tools/preview.js",
+      "kind": "patch",
+      "before_sha256": "a6aa339cfa98316f7aff97f679108c86a62a3d18ccb6b6af65ea2c0bc4db6fac",
+      "after_sha256": "2e04e0f5be025ee6f1eb462e452a60743fedf0ebd0b7f80282c733a882f31edc"
+    },
+    {
+      "path": "kit/tools/sync_locales.py",
+      "kind": "patch",
+      "before_sha256": "3eb728651ca21779a15f7503ce3a01331449caae67c4f360f265a1ae44f9a5c2",
+      "after_sha256": "c30d62973c1afcaeab86b063f50a6eeb194a97c24a27a0eaa3b6426ee97991c4"
+    },
+    {
+      "path": "kit/localization/fonts/OFL-NotoSansKR.txt",
+      "kind": "payload",
+      "before_sha256": null,
+      "after_sha256": "77fe79c891328aee1528d3efa06f344798c180d0d4df0ea02efe243f63c865fe"
+    },
+    {
+      "path": "kit/localization/fonts/korean.json",
+      "kind": "payload",
+      "before_sha256": null,
+      "after_sha256": "ae4c3c2728fd414d5b001d3c413cbfc3c4cc0588f983bc82d6d038b574273dc9"
+    },
+    {
+      "path": "kit/runtime/locales/ko.json",
+      "kind": "payload",
+      "before_sha256": null,
+      "after_sha256": "4c9648d7c1120a1ae384ee5069c093e2b14e8f83798465b2871f8633537848a2"
+    },
+    {
+      "path": "kit/runtime/locales/ko.tsv",
+      "kind": "payload",
+      "before_sha256": null,
+      "after_sha256": "69628821d95dd1a99caac46f3b0f9a03aff2a97037b2015e62852fdca8fe9440"
+    },
+    {
+      "path": "kit/tools/bake_korean.py",
+      "kind": "payload",
+      "before_sha256": null,
+      "after_sha256": "8aedf34da14a943e02028bb16986ad31c45898231f25aca675274f40366c19d8"
+    },
+    {
+      "path": "kit/tools/test_aa_ko.js",
+      "kind": "payload",
+      "before_sha256": null,
+      "after_sha256": "6988d78ddd4a2999c44aca6fbe5f5bf98f769dffd7b95715fe71479a1108d016"
+    },
+    {
+      "path": "kit/tools/test_ko.js",
+      "kind": "payload",
+      "before_sha256": null,
+      "after_sha256": "43ad10e4c2f74dfc843e46d186058d2a343419e5d60373a8b063443e3334d2d6"
+    },
+    {
+      "path": "kit/tools/test_ko.py",
+      "kind": "payload",
+      "before_sha256": null,
+      "after_sha256": "23a174148d90afc50251b2623c34bd5921f6c6831e5eca5a02a79b7dd4945451"
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+name: Validate Korean patch
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-korean-patch-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  patch-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out translation patch
+        uses: actions/checkout@v4
+        with:
+          path: patch
+      - name: Check out supported original source
+        uses: actions/checkout@v4
+        with:
+          repository: cauliflowermossgrape/idrive7-apps
+          ref: 68368fdb7d4c86a0164e9131f386baa08264f733
+          path: upstream
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check and apply Korean patch
+        run: |
+          python3 patch/apply.py --check upstream
+          python3 patch/apply.py upstream
+          python3 patch/apply.py upstream
+      - name: Check Korean translations and fonts
+        working-directory: upstream
+        run: python3 kit/tools/test_ko.py
+      - name: Check existing languages and Service behavior
+        working-directory: upstream
+        run: |
+          python3 kit/tools/test_zh.py
+          node kit/tools/test_service.js
