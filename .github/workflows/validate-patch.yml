@@ -14,7 +14,10 @@ concurrency:
 
 jobs:
   patch-tests:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     steps:
       - name: Check out translation patch
@@ -35,14 +38,14 @@ jobs:
           python-version: '3.12'
       - name: Check and apply Korean patch
         run: |
-          python3 patch/apply.py --check upstream
-          python3 patch/apply.py upstream
-          python3 patch/apply.py upstream
+          python patch/apply.py --check upstream
+          python patch/apply.py upstream
+          python patch/apply.py upstream
       - name: Check Korean translations and fonts
         working-directory: upstream
-        run: python3 kit/tools/test_ko.py
+        run: python kit/tools/test_ko.py
       - name: Check existing languages and Service behavior
         working-directory: upstream
         run: |
-          python3 kit/tools/test_zh.py
+          python kit/tools/test_zh.py
           node kit/tools/test_service.js

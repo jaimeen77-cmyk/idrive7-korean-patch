@@ -17,6 +17,9 @@ def digest(data):
 
 
 def safe_path(root, name):
+    # Windows temp paths may contain DOS short names (RUNNER~1). Canonicalize
+    # both sides so the resolved destination is compared to the same root.
+    root = root.resolve()
     path = (root / name).resolve()
     if not path.is_relative_to(root) or path == root:
         raise ValueError('Invalid patch path: ' + name)
