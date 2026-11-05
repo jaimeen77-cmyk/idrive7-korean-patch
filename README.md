@@ -79,6 +79,46 @@ python kit/tools/build.py --language ko
 `python kit/tools/make_kit.py --language ko`로 만듭니다.
 차량 설치와 제거는 [원본 안내](https://github.com/cauliflowermossgrape/idrive7-apps#3-quick-start)를 따르세요.
 
+
+
+간단하게 한글화 하기 
+
+1. app들 한글화 체크.
+
+```
+python.exe .\kit\tools\test_ko.py
+```
+
+2. 한글화 필요한 경우
+```
+python.exe .\kit\tools\test_ko.py
+PASS: ko-kr / ko-KR CLI aliases produce Korean stages, fonts and canonical package versions
+Traceback (most recent call last):
+  File "C:\bmw\kit\tools\test_ko.py", line 56, in <module>
+    assert label in words, (path, 'untranslated menu label', label)
+           ^^^^^^^^^^^^^^
+AssertionError: (WindowsPath('C:/BMW/apps/battery12v/app.json'), 'untranslated menu label', 'Battery type (voltage estimate)')
+```
+
+.\kit\runtime\locales\ko.json 수정
+
+```
+python.exe .\kit\tools\test_ko.py
+PASS: ko-kr / ko-KR CLI aliases produce Korean stages, fonts and canonical package versions
+Traceback (most recent call last):
+  File "C:\bmw\kit\tools\test_ko.py", line 56, in <module>
+    assert label in words, (path, 'untranslated menu label', label)
+           ^^^^^^^^^^^^^^
+AssertionError: (WindowsPath('C:/BMW/apps/battery12v/app.json'), 'untranslated menu label', 'Flooded (lead-acid)')
+```
+
+
+3. 
+위의 결과로 .\kit\runtime\locales\ko.json 파일에 누락된 한글화 추가내용
+
+,"Read voltage / current every":"전압읽기 / 전류",
+"Flooded (lead-acid)":"액식 배터리"
+}
 ## 검증과 업데이트
 
 이 저장소의 **Actions → Validate Korean patch**는 검증 기준 원본을 별도로 내려받아
